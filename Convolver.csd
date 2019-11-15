@@ -1,5 +1,5 @@
 <Cabbage>
-form caption("Untitled") size(400, 300), colour(58, 110, 182), pluginid("def1")
+form caption("Convolver") size(400, 300), colour(58, 110, 182), pluginid("def1")
 rslider bounds(296, 162, 100, 100), channel("gain"), range(0, 1, 0, 1, .01), text("Gain"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black")
 rslider bounds(10, 162, 100, 100), channel("skipsamples"), range(0, 1, 0, 1, .01), text("Skip"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black"), range(0, 1.00, 0)
 rslider bounds(150, 50, 100, 100), channel("mix"), range(0, 1, 0, 1, .01), text("Mix"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black") range(0, 1.00, 0.25)
@@ -22,13 +22,31 @@ nchnls = 2
 
 giImpulse	ftgen	1,0,2,-2,0
 
+; compress function table UDO
+opcode	tab_compress,i,iii
+ifn,iCompRat,iCurve    xin
+iTabLen         =               ftlen(ifn)
+iTabLenComp     =               int(ftlen(ifn)*iCompRat)
+iTableComp      ftgen           ifn+200,0,-iTabLenComp,-2, 0
+iAmpScaleTab	ftgen		ifn+300,0,-iTabLenComp,-16, 1,iTabLenComp,iCurve,0
+icount          =               0
+loop:
+ival            table           icount, ifn
+iAmpScale   	table		icount, iAmpScaleTab
+                tableiw         ival*iAmpScale,icount,iTableComp
+                loop_lt         icount,1,iTabLenComp,loop
+                xout   	        iTableComp
+endop
+
+
 
 instr 1
 
 kskipsamples	chnget	"skipsamples"
 kmix	chnget	"mix"
 kGain chnget "gain"
-
+	kCompRat       init	1 
+	kCurve init 0
 
 ; ***************INPUT SECTION***********************************************	
 ;a1 inch 1
@@ -39,14 +57,22 @@ kGain chnget "gain"
 
 gSfilepath = "miraj_trim.wav"
 
+aasig,aasig2 diskin2 "miraj_trim.wav" , 1, 0, 1
+
+aComp compress aasig, aasig2, -12, 48, 60, 4, 0.2, 0.3, .05
+
 giImpulse	ftgen	1,0,0,1,gSfilepath,0,0,0	; load stereo file into fTable
 
 iplen = 2048				;BUFFER LENGTH (INCREASE IF EXPERIENCING PERFORMANCE PROBLEMS, REDUCE IN ORDER TO REDUCE LATENCY)
 itab = giImpulse			;DERIVE FUNCTION TABLE NUMBER OF CHOSEN TABLE FOR IMPULSE FILE
 iirlen	= nsamp(itab)*0.5			;DERIVE THE LENGTH OF THE IMPULSE RESPONSE IN SAMPLES. DIVIDE BY 2 AS TABLE IS STEREO.
 iskipsamples = nsamp(itab)*0.5*i(kskipsamples)	;DERIVE INSKIP INTO IMPULSE FILE. DIVIDE BY 2 (MULTIPLY BY 0.5) AS ALL IMPULSE FILES ARE STEREO
+
+
+	;;CREATE COMPRESSED TABLES
+			icomp	tab_compress	giImpulse,i(kCompRat),i(kCurve)
 	
-aL,aR	ftconv	ainMix, itab, iplen,iskipsamples, iirlen		;CONVOLUTE INPUT SOUND
+aL,aR	ftconv	ainMix, icomp, iplen,iskipsamples, iirlen		;CONVOLUTE INPUT SOUND
 	 adelL	delay	ainL, 0.2 ;abs((iplen/sr)+i(kDelayOS)) 	;DELAY THE INPUT SOUND ACCORDING TO THE BUFFER SIZE
 	 adelR	delay	ainR, 0.2 ;abs((iplen/sr)+i(kDelayOS)) 	;DELAY THE INPUT SOUND ACCORDING TO THE BUFFER SIZE
 	
