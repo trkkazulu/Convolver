@@ -1,3 +1,7 @@
+; Convolver (working title)
+; Written by Jair-Rohm Parker Wells 2019
+; A convlution based effect
+
 <Cabbage>
 form caption("Convolver") size(400, 300), colour(58, 110, 182), pluginid("def1")
 rslider bounds(296, 162, 100, 100), channel("gain"), range(0, 1, 0, 1, .01), text("Gain"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black")
@@ -49,9 +53,9 @@ kGain chnget "gain"
 	kCurve init 0
 
 ; ***************INPUT SECTION***********************************************	
-;a1 inch 1
-;a2 inch 2
-	ainL, ainR diskin2	"stereoBass.wav",1,0,1	;USE A LOOPED STEREO SOUND FILE FOR TESTING
+ainL inch 1
+ainR inch 2
+;	ainL, ainR diskin2	"stereoBass.wav",1,0,1	;USE A LOOPED STEREO SOUND FILE FOR TESTING
 	ainMix	sum	ainL,ainR
 ;***************************************************************************
 
