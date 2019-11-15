@@ -1,7 +1,8 @@
 <Cabbage>
 form caption("Untitled") size(400, 300), colour(58, 110, 182), pluginid("def1")
 rslider bounds(296, 162, 100, 100), channel("gain"), range(0, 1, 0, 1, .01), text("Gain"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black")
-rslider bounds(10, 162, 100, 100), channel("gain"), range(0, 1, 0, 1, .01), text("Skip"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black"), channel("skipsamples"), range(0, 1.00, 0)
+rslider bounds(10, 162, 100, 100), channel("skipsamples"), range(0, 1, 0, 1, .01), text("Skip"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black"), range(0, 1.00, 0)
+rslider bounds(150, 50, 100, 100), channel("mix"), range(0, 1, 0, 1, .01), text("Mix"), trackercolour("lime"), outlinecolour(0, 0, 0, 50), textcolour("black") range(0, 1.00, 0.25)
 
 
 
@@ -25,30 +26,35 @@ giImpulse	ftgen	1,0,2,-2,0
 instr 1
 
 kskipsamples	chnget	"skipsamples"
+kmix	chnget	"mix"
 kGain chnget "gain"
 
 
 ; ***************INPUT SECTION***********************************************	
 ;a1 inch 1
 ;a2 inch 2
-	a1, a2 diskin2	"stereoBass.wav",1,0,1	;USE A LOOPED STEREO SOUND FILE FOR TESTING
-	ainMix	sum	a1,a2
+	ainL, ainR diskin2	"stereoBass.wav",1,0,1	;USE A LOOPED STEREO SOUND FILE FOR TESTING
+	ainMix	sum	ainL,ainR
 ;***************************************************************************
 
 gSfilepath = "miraj_trim.wav"
 
-	giImpulse	ftgen	1,0,0,1,gSfilepath,0,0,0	; load stereo file
+giImpulse	ftgen	1,0,0,1,gSfilepath,0,0,0	; load stereo file into fTable
 
-iplen = 1024				;BUFFER LENGTH (INCREASE IF EXPERIENCING PERFORMANCE PROBLEMS, REDUCE IN ORDER TO REDUCE LATENCY)
+iplen = 2048				;BUFFER LENGTH (INCREASE IF EXPERIENCING PERFORMANCE PROBLEMS, REDUCE IN ORDER TO REDUCE LATENCY)
 itab = giImpulse			;DERIVE FUNCTION TABLE NUMBER OF CHOSEN TABLE FOR IMPULSE FILE
 iirlen	= nsamp(itab)*0.5			;DERIVE THE LENGTH OF THE IMPULSE RESPONSE IN SAMPLES. DIVIDE BY 2 AS TABLE IS STEREO.
 iskipsamples = nsamp(itab)*0.5*i(kskipsamples)	;DERIVE INSKIP INTO IMPULSE FILE. DIVIDE BY 2 (MULTIPLY BY 0.5) AS ALL IMPULSE FILES ARE STEREO
 	
-a1,a2	ftconv	ainMix, itab, iplen,iskipsamples, iirlen		;CONVOLUTE INPUT SOUND
-	 ;adelL	delay	a1, abs((iplen/sr)+i(kDelayOS)) 	;DELAY THE INPUT SOUND ACCORDING TO THE BUFFER SIZE
-	 ;adelR	delay	a2, abs((iplen/sr)+i(kDelayOS)) 	;DELAY THE INPUT SOUND ACCORDING TO THE BUFFER SIZE
+aL,aR	ftconv	ainMix, itab, iplen,iskipsamples, iirlen		;CONVOLUTE INPUT SOUND
+	 adelL	delay	ainL, 0.2 ;abs((iplen/sr)+i(kDelayOS)) 	;DELAY THE INPUT SOUND ACCORDING TO THE BUFFER SIZE
+	 adelR	delay	ainR, 0.2 ;abs((iplen/sr)+i(kDelayOS)) 	;DELAY THE INPUT SOUND ACCORDING TO THE BUFFER SIZE
+	
+;	 CREATE A DRY/WET MIX
+	aMixL	ntrpol	adelL,aL*0.1,kmix
+	aMixR	ntrpol	adelR,aR*0.1,kmix
 
-outs a1*kGain, a2*kGain
+outs aMixL*kGain, aMixR*kGain
 
 endin
 
