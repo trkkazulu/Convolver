@@ -3,15 +3,15 @@
 ; A convlution based effect
 
 <Cabbage>
-form caption("Convolver") size(400, 300), colour(58, 110, 182), pluginid("def1"), style("flat")
+form caption("Convolver") size(400, 300), colour(58, 110, 182), pluginid("def1"), style("flat"), bundle("miraj_trim.wav")
 rslider bounds(292, 116, 100, 100), channel("gain"), range(0, 1, 0, 1, 0.01), text("Gain"), trackercolour(0, 255, 0, 255), outlinecolour(0, 0, 0, 50), textcolour(0, 0, 0, 255)
 rslider bounds(6, 116, 100, 100), channel("skipsamples"), range(0, 1, 0, 1, 0.01), text("Skip"), trackercolour(0, 255, 0, 255), outlinecolour(0, 0, 0, 50), textcolour(0, 0, 0, 255), range(0, 1, 0, 1, 0.01)
 rslider bounds(146, 4, 100, 100), channel("mix"), range(0, 1, 0.25, 1, 0.01), text("Mix"), trackercolour(0, 255, 0, 255), outlinecolour(0, 0, 0, 50), textcolour(0, 0, 0, 255) range(0, 1, 0.25, 1, 0.01)
 ;soundfiler bounds(108, 228, 189, 69), file("miraj_trim.wav") tablebackgroundcolour(0, 0, 0, 128) colour(255, 0, 0, 255)
 signaldisplay bounds(106, 218, 189, 69), backgroundcolour(0, 0, 0, 128) colour(255, 0, 0, 255), , channel("ainMix") colour:0(255, 0, 0, 255)
 
-bundle("miraj_trim.wav")
-import("./miraj_trim.wav")
+
+;import("./miraj_trim.wav")
 
 </Cabbage>
 
